@@ -334,12 +334,15 @@ class PXEBaseMixin(object):
         node = task.node
 
         if not driver_utils.get_node_mac_addresses(task):
+            LOG.warning("Node does not have any port associated with it. Task: %(task)s",
+                        {'task': task})
             raise exception.MissingParameterValue(
                 _("Node %s does not have any port associated with it")
                 % node.uuid)
 
         if self.ipxe_enabled:
             if not CONF.deploy.http_url or not CONF.deploy.http_root:
+                LOG.warning("iPXE boot is enabled but no HTTP URL or HTTP root was specified")
                 raise exception.MissingParameterValue(_(
                     "iPXE boot is enabled but no HTTP URL or HTTP "
                     "root was specified"))
@@ -437,7 +440,8 @@ class PXEBaseMixin(object):
         """
         try:
             self._validate_common(task)
-        except exception.MissingParameterValue:
+        except exception.MissingParameterValue as e:
+            LOG.warning('Failed to validate : %(ex)s', {'ex': str(e)})
             # Fall back to non-managed in-band inspection
             raise exception.UnsupportedDriverExtension(
                 driver=task.node.driver, extension='inspection')
